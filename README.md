@@ -61,10 +61,10 @@ Se creará un Excel de la extracción en: `datos/yahoo/YYYY-MM-DD/HHMMSS.xlsx`
 python main.py --module yahoo --format excel
 ```
 
-**Guardado en JSON:**
-Generará una estructura JSON en lugar de usar pandas.
+**Extracción de detalles adicionales:**
+Se navegará a la vista en profundidad de cada compañía ("Previous Close", "PE Ratio", "Volume", etc). Se generará un JSON y uno para detallas usando:
 ```bash
-python main.py --module yahoo --format json
+python main.py --module yahoo --format json --include-details
 ```
 
 **Ver Ayuda del CLI:**

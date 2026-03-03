@@ -44,6 +44,12 @@ def main():
         help="El formato en el cual exportar los datos (ej. 'excel', 'json')"
     )
 
+    parser.add_argument(
+        "--include-details", 
+        action="store_true", 
+        help="Determina si posterior a la tabla resumen se quiere ir a cada empresa para obtener detalles."
+    )
+
     args = parser.parse_args()
 
     try:
@@ -59,6 +65,21 @@ def main():
         if data:
             file_path = exporter.export(data, args.module)
             logger.info(f"Proceso finalizado exitosamente. Archivo: {file_path}")
+            
+            # 4. Extracción Detallada opcional
+            if getattr(args, 'include_details', False):
+                logger.info("Iniciando extracción detallada por empresa...")
+                # Extraer lista de símbolos del listado original
+                symbols = [item.symbol for item in data]
+                details_data = extractor.extract_all_details(symbols)
+                
+                if details_data:
+                    # Sobrescribimos temporalmente el subdirectorio para diferenciar
+                    details_file_path = exporter.export(details_data, f"{args.module}_details")
+                    logger.info(f"Proceso de detalles finalizado. Archivo: {details_file_path}")
+                else:
+                    logger.warning("No se pudo obtener la información detallada.")
+                    
         else:
             logger.warning("No se obtuvieron datos. No se exportará ningún archivo.")
             

@@ -18,7 +18,8 @@
 ## Extractores Implementados
 1. **Yahoo Trending Stocks (`yahoo`)**
    - URL: `https://finance.yahoo.com/markets/stocks/trending/`
-   - Extrae 10 campos: `symbol`, `name`, `price`, `change`, `change_percent`, `volume`, `avg_vol_3m`, `market_cap`, `pe_ratio_ttm`, `week_52_change_percent`.
+   - **Nivel 1 (Resumen)**: Extrae 10 campos `symbol`, `name`, `price`, `change`, `change_percent`, `volume`, `avg_vol_3m`, `market_cap`, `pe_ratio_ttm`, `week_52_change_percent`.
+   - **Nivel 2 (Detalles)**: Navega a cada subpágina (ej: `https://finance.yahoo.com/quote/{symbol}`) para extraer 16 campos extendidos tales como `previous_close`, `open_price`, `bid`, `ask` a través del flag `--include-details`.
 
 ## Exportadores Implementados
 1. **Excel** (`excel`)

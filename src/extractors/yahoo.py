@@ -2,7 +2,7 @@ import requests
 from bs4 import BeautifulSoup
 from typing import List, Any
 from src.extractors.base import BaseExtractor
-from src.models.stock import StockData
+from src.models.stock import StockData, CompanyDetails
 
 class YahooExtractor(BaseExtractor):
     """
@@ -106,3 +106,55 @@ class YahooExtractor(BaseExtractor):
         except Exception as e:
             self.logger.error(f"[{self.module_name}] Error general: {e}")
             raise e
+
+    def extract_details(self, symbol: str) -> CompanyDetails:
+        url = f"https://finance.yahoo.com/quote/{symbol}/"
+        self.logger.info(f"[{self.module_name}] Extrayendo detalles de {symbol} en {url}")
+        
+        try:
+            response = requests.get(url, headers=self.headers, timeout=15)
+            response.raise_for_status()
+            
+            soup = BeautifulSoup(response.text, 'html.parser')
+            ul_element = soup.find('ul', class_='yf-6myrf1')
+            
+            if not ul_element:
+                self.logger.warning(f"[{self.module_name}] No se encontró la lista de detalles para {symbol}.")
+                return None
+                
+            items = ul_element.find_all('li')
+            
+            # Helper para buscar por título (label)
+            def get_value_by_title(title: str) -> str:
+                for item in items:
+                    label_span = item.find('span', class_='label')
+                    if label_span and title.lower() in label_span.text.lower():
+                        val_span = item.find('span', class_='value')
+                        return val_span.text.strip() if val_span else ""
+                return ""
+            
+            details = CompanyDetails(
+                symbol=symbol,
+                previous_close=get_value_by_title("Previous Close"),
+                open_price=get_value_by_title("Open"),
+                bid=get_value_by_title("Bid"),
+                ask=get_value_by_title("Ask"),
+                days_range=get_value_by_title("Day's Range"),
+                week_52_range=get_value_by_title("52 Week Range"),
+                volume=get_value_by_title("Volume"),
+                avg_volume=get_value_by_title("Avg. Volume"),
+                market_cap=get_value_by_title("Market Cap (intraday)"),
+                beta_5y=get_value_by_title("Beta (5Y Monthly)"),
+                pe_ratio_ttm=get_value_by_title("PE Ratio (TTM)"),
+                eps_ttm=get_value_by_title("EPS (TTM)"),
+                earnings_date=get_value_by_title("Earnings Date"),
+                forward_dividend_yield=get_value_by_title("Forward Dividend & Yield"),
+                ex_dividend_date=get_value_by_title("Ex-Dividend Date"),
+                target_est_1y=get_value_by_title("1y Target Est")
+            )
+            
+            return details
+            
+        except Exception as e:
+            self.logger.error(f"[{self.module_name}] Error obteniendo detalles para {symbol}: {e}")
+            return None
