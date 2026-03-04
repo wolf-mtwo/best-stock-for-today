@@ -11,7 +11,7 @@ class Config:
     DATA_DIR = os.path.join(BASE_DIR, "datos")
     
     # Módulos permitidos
-    ALLOWED_MODULES = ["yahoo"]
+    ALLOWED_MODULES = ["yahoo", "bcb"]
     ALLOWED_FORMATS = ["excel", "json"]
 
 config = Config()

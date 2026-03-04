@@ -19,7 +19,11 @@
 1. **Yahoo Trending Stocks (`yahoo`)**
    - URL: `https://finance.yahoo.com/markets/stocks/trending/`
    - **Nivel 1 (Resumen)**: Extrae 10 campos `symbol`, `name`, `price`, `change`, `change_percent`, `volume`, `avg_vol_3m`, `market_cap`, `pe_ratio_ttm`, `week_52_change_percent`.
-   - **Nivel 2 (Detalles)**: Navega a cada subpágina (ej: `https://finance.yahoo.com/quote/{symbol}`) para extraer 16 campos extendidos tales como `previous_close`, `open_price`, `bid`, `ask` a través del flag `--include-details`.
+   - **Nivel 2 (Detalles)**: Navega a cada subpágina (ej: `https://finance.yahoo.com/quote/{symbol}`) para extraer 16 campos extendidos tales como `previous_close`, `open_price`, y los valores primarios `current_price`, `numeric_change`, y `percentage_change` (obtenidos de la clase de cabecera en tiempo real de Yahoo).
+2. **Banco Central de Bolivia (`bcb`)**
+   - URL: `https://www.bcb.gob.bo/`
+   - Navega al DOM central del Banco para parsear datos volátiles incluyendo `tipo_cambio_oficial`, `tipo_cambio_referencial`, `ufv` y la cotización del `oro_internacional`.
+
 
 ## Exportadores Implementados
 1. **Excel** (`excel`)

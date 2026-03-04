@@ -116,6 +116,21 @@ class YahooExtractor(BaseExtractor):
         try:
             html_content = self.http_client.get_html(url)
             soup = BeautifulSoup(html_content, 'html.parser')
+            
+            # Buscar el header principal (Precios en tiempo real)
+            price_streamer = soup.find('fin-streamer', {'data-field': 'regularMarketPrice'})
+            change_streamer = soup.find('fin-streamer', {'data-field': 'regularMarketChange'})
+            pct_change_streamer = soup.find('fin-streamer', {'data-field': 'regularMarketChangePercent'})
+            
+            current_price = price_streamer.text.strip() if price_streamer else ""
+            numeric_change = change_streamer.text.strip() if change_streamer else ""
+            
+            # Formatear el porcentaje a "+X.XX %" si existe
+            percentage_change = ""
+            if pct_change_streamer:
+                raw_pct = pct_change_streamer.text.strip().replace('(', '').replace(')', '').replace('%', '')
+                percentage_change = f"{raw_pct} %" if raw_pct else ""
+
             ul_element = soup.find('ul', class_='yf-6myrf1')
             
             if not ul_element:
@@ -135,6 +150,9 @@ class YahooExtractor(BaseExtractor):
             
             details = CompanyDetails(
                 symbol=symbol,
+                current_price=current_price,
+                numeric_change=numeric_change,
+                percentage_change=percentage_change,
                 previous_close=get_value_by_title("Previous Close"),
                 open_price=get_value_by_title("Open"),
                 bid=get_value_by_title("Bid"),

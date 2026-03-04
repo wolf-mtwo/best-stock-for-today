@@ -17,6 +17,9 @@ class StockData:
 @dataclass
 class CompanyDetails:
     symbol: str
+    current_price: str
+    numeric_change: str
+    percentage_change: str
     previous_close: str
     open_price: str
     bid: str

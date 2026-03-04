@@ -9,6 +9,7 @@ from src.exceptions import ScrapingBaseError
 
 # Extractors
 from src.extractors.yahoo import YahooExtractor
+from src.extractors.bcb import BcbExtractor
 
 # Exporters
 from src.exporters.excel import ExcelExporter
@@ -19,6 +20,8 @@ logger = setup_logger("main")
 def get_extractor(module_name: str, ext_logger: logging.Logger, client: HttpClient):
     if module_name == "yahoo":
         return YahooExtractor(logger=ext_logger, http_client=client)
+    elif module_name == "bcb":
+        return BcbExtractor(logger=ext_logger, http_client=client)
     else:
         raise ValueError(f"Módulo '{module_name}' no está soportado.")
 

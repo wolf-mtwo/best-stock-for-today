@@ -67,6 +67,12 @@ Se navegará a la vista en profundidad de cada compañía ("Previous Close", "PE
 python main.py --module yahoo --format json --include-details
 ```
 
+**Guardado de datos del Banco Central de Bolivia (BCB):**
+Extrayendo los datos en tiempo real de tipos de cambio referenciales, oficiales, oro y UFV desde bcb.gob.bo.
+```bash
+python main.py --module bcb --format json
+```
+
 **Ver Ayuda del CLI:**
 ```bash
 python main.py --help
