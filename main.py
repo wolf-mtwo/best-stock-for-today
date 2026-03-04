@@ -1,7 +1,11 @@
 import argparse
 import sys
+import logging
+from typing import Optional
 from src.config import config
 from src.utils.logger import setup_logger
+from src.utils.http_client import HttpClient
+from src.exceptions import ScrapingBaseError
 
 # Extractors
 from src.extractors.yahoo import YahooExtractor
@@ -12,17 +16,17 @@ from src.exporters.json import JsonExporter
 
 logger = setup_logger("main")
 
-def get_extractor(module_name: str):
+def get_extractor(module_name: str, ext_logger: logging.Logger, client: HttpClient):
     if module_name == "yahoo":
-        return YahooExtractor()
+        return YahooExtractor(logger=ext_logger, http_client=client)
     else:
         raise ValueError(f"Módulo '{module_name}' no está soportado.")
 
-def get_exporter(format_type: str):
+def get_exporter(format_type: str, exp_logger: logging.Logger, output_dir: str):
     if format_type == "excel":
-        return ExcelExporter()
+        return ExcelExporter(logger=exp_logger, output_dir=output_dir)
     elif format_type == "json":
-        return JsonExporter()
+        return JsonExporter(logger=exp_logger, output_dir=output_dir)
     else:
         raise ValueError(f"Formato '{format_type}' no está soportado.")
 
@@ -53,9 +57,12 @@ def main():
     args = parser.parse_args()
 
     try:
-        # 1. Obtención de instancías orquestadas
-        extractor = get_extractor(args.module)
-        exporter = get_exporter(args.format)
+        # 0. Instanciación de dependencias (Composition Root)
+        http_client = HttpClient()
+        
+        # 1. Obtención de instancías orquestadas inyectando dependencias
+        extractor = get_extractor(args.module, setup_logger(args.module), http_client)
+        exporter = get_exporter(args.format, setup_logger("exporter"), config.DATA_DIR)
         
         # 2. Extracción (Liskov Substitution Principle / Dependency Inversion Principle)
         logger.info(f"Iniciando flujo de extracción para el módulo '{args.module}' con destino en '{args.format}'")
@@ -83,8 +90,11 @@ def main():
         else:
             logger.warning("No se obtuvieron datos. No se exportará ningún archivo.")
             
+    except ScrapingBaseError as sbe:
+        logger.error(f"Error de dominio controlado: {sbe}")
+        sys.exit(1)
     except Exception as e:
-        logger.error(f"Falla crítica en la ejecución del flujo: {e}")
+        logger.error(f"Falla crítica no controlada en la ejecución del flujo: {e}")
         sys.exit(1)
 
 if __name__ == "__main__":

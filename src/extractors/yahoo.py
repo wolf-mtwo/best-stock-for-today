@@ -1,32 +1,34 @@
-import requests
+import logging
 from bs4 import BeautifulSoup
 from typing import List, Any
 from src.extractors.base import BaseExtractor
 from src.models.stock import StockData, CompanyDetails
+from src.exceptions import ExtractionError, NetworkError
+from src.utils.http_client import HttpClient
 
 class YahooExtractor(BaseExtractor):
     """
-    Extractor para Yahoo Finance Trending Stocks.
+    Extractor para Yahoo Finance Trending Stocks utilizando BeautifulSoup.
+    Cumple con el OCP al extender BaseExtractor y respeta el SRP al delegar peticiones a self.http_client.
     """
     
     URL = "https://finance.yahoo.com/markets/stocks/trending/"
     
-    def __init__(self):
-        super().__init__(module_name="yahoo")
-        # Headers para evitar bloqueo (HTTP 403 Forbidden)
-        self.headers = {
-            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-            "Accept-Language": "en-US,en;q=0.9",
-        }
+    def __init__(self, logger: logging.Logger, http_client: HttpClient):
+        """
+        Constructor con inyección de dependencias.
+        Args:
+            logger (logging.Logger): Transmite logs hacia las consolas.
+            http_client (HttpClient): Realiza peticiones web y recupera HTML.
+        """
+        super().__init__(module_name="yahoo", logger=logger, http_client=http_client)
         
     def extract(self) -> List[StockData]:
         self.logger.info(f"[{self.module_name}] Iniciando extracción desde {self.URL}")
         
         try:
-            response = requests.get(self.URL, headers=self.headers, timeout=15)
-            response.raise_for_status()
-            
-            soup = BeautifulSoup(response.text, 'html.parser')
+            html_content = self.http_client.get_html(self.URL)
+            soup = BeautifulSoup(html_content, 'html.parser')
             
             # Buscar la tabla - se ajusta al HTML provisto
             table = soup.find('table', class_='yf-1tpeyy7')
@@ -100,22 +102,20 @@ class YahooExtractor(BaseExtractor):
             self.logger.info(f"[{self.module_name}] Extracción finalizada. Registros procesados: {len(data_list)}")
             return data_list
             
-        except requests.exceptions.RequestException as e:
-            self.logger.error(f"[{self.module_name}] Error en la solicitud HTTP: {e}")
-            raise e
+        except NetworkError as ne:
+            self.logger.error(f"[{self.module_name}] Error de red durante la extracción: {ne}")
+            raise ExtractionError(str(ne))
         except Exception as e:
             self.logger.error(f"[{self.module_name}] Error general: {e}")
-            raise e
+            raise ExtractionError(str(e))
 
     def extract_details(self, symbol: str) -> CompanyDetails:
         url = f"https://finance.yahoo.com/quote/{symbol}/"
         self.logger.info(f"[{self.module_name}] Extrayendo detalles de {symbol} en {url}")
         
         try:
-            response = requests.get(url, headers=self.headers, timeout=15)
-            response.raise_for_status()
-            
-            soup = BeautifulSoup(response.text, 'html.parser')
+            html_content = self.http_client.get_html(url)
+            soup = BeautifulSoup(html_content, 'html.parser')
             ul_element = soup.find('ul', class_='yf-6myrf1')
             
             if not ul_element:

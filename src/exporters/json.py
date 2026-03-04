@@ -3,14 +3,18 @@ import json
 import datetime
 from dataclasses import asdict
 from typing import List, Any
+import logging
+from src.exceptions import ExportError
 from src.exporters.base import BaseExporter
-from src.config import config
 
 class JsonExporter(BaseExporter):
     """
     Exportador de datos en formato JSON.
-    SOLID: Single Responsibility Principle
+    Aplica principio SRP delegando configuración a inyección de dependencias.
     """
+    
+    def __init__(self, logger: logging.Logger, output_dir: str):
+        super().__init__(logger=logger, output_dir=output_dir)
     
     def export(self, data: List[Any], module_name: str) -> str:
         if not data:
@@ -26,7 +30,7 @@ class JsonExporter(BaseExporter):
             date_str = now.strftime("%Y-%m-%d")
             time_str = now.strftime("%H%M%S")
             
-            folder_path = os.path.join(config.DATA_DIR, module_name, date_str)
+            folder_path = os.path.join(self.output_dir, module_name, date_str)
             os.makedirs(folder_path, exist_ok=True)
             
             file_name = f"{time_str}.json"
@@ -41,4 +45,4 @@ class JsonExporter(BaseExporter):
             
         except Exception as e:
             self.logger.error(f"Error al exportar a JSON: {e}")
-            raise e
+            raise ExportError(f"Falló guardando archivo JSON: {e}")

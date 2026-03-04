@@ -1,17 +1,25 @@
 from abc import ABC, abstractmethod
 from typing import List, Any
-from src.utils.logger import setup_logger
-
-logger = setup_logger(__name__)
+import logging
+from src.utils.http_client import HttpClient
 
 class BaseExtractor(ABC):
     """
-    Clase base para todos los extractores (SOLID: Open/Closed Principle)
+    Clase base para todos los extractores.
+    Se inyectan dependencias como el logger y el http_client (SOLID: DIP)
     """
     
-    def __init__(self, module_name: str):
+    def __init__(self, module_name: str, logger: logging.Logger, http_client: HttpClient):
+        """
+        Inicializa un extrator genérico.
+        Args:
+            module_name (str): Selector del módulo de base de datos.
+            logger (logging.Logger): Dependencia inyectada para registros.
+            http_client (HttpClient): Dependencia inyectada para efectuar peticiones web.
+        """
         self.module_name = module_name
         self.logger = logger
+        self.http_client = http_client
         
     @abstractmethod
     def extract(self) -> List[Any]:
